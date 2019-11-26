@@ -1,6 +1,9 @@
 import urllib
 from bs4 import BeautifulSoup
 
+import time
+import random
+
 
 class Paper:
     def __init__(self, field, title, authors, pdf, abstract):
@@ -31,10 +34,14 @@ def get_fields(domain='cs'):
     return fields
 
 
-def get_abstract(url):
+def get_abstract(url, sleep=True):
     uh = urllib.request.urlopen(url)
     soup = BeautifulSoup(str(uh.read()))
     a = soup.findAll('blockquote', {'class': 'abstract mathjax'})[0].text
     a = a.replace('\\n', ' ')
     a = a.replace('Abstract:  ', '')
+    
+    if sleep:
+        time.sleep(random.randint(2, 5))
+    
     return a
