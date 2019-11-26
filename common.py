@@ -35,7 +35,9 @@ def get_fields(domain='cs'):
 
 
 def get_abstract(url, sleep=True):
-    uh = urllib.request.urlopen(url)
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    req = urllib.request.Request(url=url, headers=headers) 
+    uh = urllib.request.urlopen(req)
     soup = BeautifulSoup(str(uh.read()), features='lxml')
     a = soup.findAll('blockquote', {'class': 'abstract mathjax'})[0].text
     a = a.replace('\\n', ' ')
