@@ -6,10 +6,11 @@ import random
 
 
 class Paper:
-    def __init__(self, field, title, authors, pdf, abstract):
+    def __init__(self, field, title, authors, date, pdf, abstract):
         self.field = field
         self.title = title
         self.authors = authors
+        self.date = date
         self.pdf = pdf
         self.abstract = abstract
         
