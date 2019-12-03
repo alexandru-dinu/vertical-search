@@ -6,13 +6,12 @@ import random
 
 
 class Paper:
-    def __init__(self, field, title, authors, date, pdf, abstract):
-        self.field = field
-        self.title = title
-        self.authors = authors
-        self.date = date
-        self.pdf = pdf
-        self.abstract = abstract
+    _fields = ['field', 'title', 'authors', 'date', 'pdf', 'abstract', 'references']
+    
+    def __init__(self, **kwargs):
+        for k in kwargs:
+            assert k in self._fields
+        self.__dict__.update(kwargs)
         
     def __repr__(self):
         s = 'Paper {\n'
