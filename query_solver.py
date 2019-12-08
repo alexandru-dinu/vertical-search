@@ -1,38 +1,80 @@
-import lucene
-from org.apache.lucene import analysis, document, index, queryparser, search, store, util
-from lupyne import engine
-lucene.initVM()
+import pprint
+from argparse import ArgumentParser
+
+from whoosh import index
+from whoosh import qparser
+
+
+def get_user_query():
+    query_dict = {
+        "paper_field": None,
+        "title": None,
+        "authors": None,
+        "abstract": None,
+    }
+
+    print("$>> New query:")
+    for key in query_dict:
+        query_dict[key] = input(
+            "$>> Specify values for field {} or continue: ".format(key)
+        ).lower()
+
+    print("$>> Query result: ")
+    return query_dict
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument(
+        'index_path',
+        type=str,
+        help='Path to the folder where the index was built'
+    )
+    parser.add_argument(
+        'index_name',
+        type=str,
+        help='Name of the index'
+    )
+
+    parser.add_argument(
+        '--limit',
+        type=int,
+        default=10,
+        help='Maximum number of results to return'
+    )
+
+    return parser.parse_args()
 
 
 def main():
-    analyzer = analysis.standard.StandardAnalyzer(util.Version.LUCENE_CURRENT)
+    args = parse_args()
 
-    # Store the index in memory:
-    directory = store.RAMDirectory()
-    # To store an index on disk, use this instead:
-    # Directory directory = FSDirectory.open(File("/tmp/testindex"))
-    config = index.IndexWriterConfig(util.Version.LUCENE_CURRENT, analyzer)
-    iwriter = index.IndexWriter(directory, config)
-    doc = document.Document()
-    text = "This is the text to be indexed."
-    doc.add(document.Field("fieldname", text, document.TextField.TYPE_STORED))
-    iwriter.addDocument(doc)
-    iwriter.close()
+    idx = index.open_dir(args.index_path, indexname=args.index_name)
+    parser = qparser.QueryParser('abstract', idx.schema)
 
-    # Now search the index:
-    ireader = index.IndexReader.open(directory)
-    isearcher = search.IndexSearcher(ireader)
-    # Parse a simple query that searches for "text":
-    parser = queryparser.classic.QueryParser(util.Version.LUCENE_CURRENT, "fieldname", analyzer)
-    query = parser.parse("text")
-    hits = isearcher.search(query, None, 1000).scoreDocs
-    assert len(hits) == 1
-    #Iterate through the results:
-    for hit in hits:
-        hitDoc = isearcher.doc(hit.doc)
-        assert hitDoc['fieldname'] == text
-    ireader.close()
-    directory.close()
+    printer = pprint.PrettyPrinter()
+
+    while True:
+        query = get_user_query()
+        query_as_string = ""
+        for key in query:
+            if query[key] is None or query[key] == '':
+                continue
+
+            query_as_string += key + ":(" + query[key] + ") "
+
+        q = parser.parse(query_as_string)
+        with idx.searcher() as searcher:
+            result = searcher.search(q, limit=args.limit)
+            dict_res = {}
+            for res in result:
+                for key in res.keys():
+                    dict_res[key] = res[key]
+                printer.pprint(dict_res)
+
+        new_input = input("$ >> Do you want to search for anything else ? [Y/N] ")
+        if new_input.lower() == 'n':
+            break
 
 
 if __name__ == '__main__':

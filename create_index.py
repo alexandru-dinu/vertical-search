@@ -4,7 +4,6 @@ import re
 from argparse import ArgumentParser
 from tqdm import tqdm
 
-from common import Paper
 from whoosh.fields import Schema
 from whoosh.fields import TEXT, KEYWORD, STORED, ID, DATETIME
 from whoosh.analysis import StemmingAnalyzer
@@ -16,7 +15,6 @@ def index_document():
 
 
 def parse_authors(authors):
-
     authorsName = []
     for author in authors:
         names = author.split(' ')
@@ -27,9 +25,7 @@ def parse_authors(authors):
     return ' '.join(authorsName)
 
 
-
 def make_schema():
-
     schema = Schema(
         paper_field=KEYWORD(stored=True, lowercase=True, scorable=True),
         title=TEXT(stored=True),
@@ -42,7 +38,6 @@ def make_schema():
 
 
 def make_index(schema, indexPath='indexdir', indexName='my_index'):
-
     if not os.path.exists(indexPath):
         os.mkdir(indexPath)
 
@@ -50,10 +45,10 @@ def make_index(schema, indexPath='indexdir', indexName='my_index'):
 
 
 def index_documents(documentsPath='out', indexPath='indexdir', indexName='my_index'):
-
     idx = index.open_dir(indexPath, indexname=indexName)
     files = os.listdir(documentsPath)
-    for fileName in tqdm(files[1:10]):
+    print("Indexing files... ")
+    for fileName in tqdm(files):
         with open(documentsPath + '/' + fileName, 'rb') as f:
             doc = pickle.load(f)
             writer = idx.writer()
@@ -69,16 +64,33 @@ def index_documents(documentsPath='out', indexPath='indexdir', indexName='my_ind
                 )
             writer.commit()
 
-    print(files[1:10])
 
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument(
+        'index_path',
+        type=str,
+        help='Path to the folder where the index was built'
+    )
+    parser.add_argument(
+        'index_name',
+        type=str,
+        help='Name of the index'
+    )
+    parser.add_argument(
+        'documents_path',
+        type - str,
+        help='Path to the documents to be indexed'
+    )
+    return parser.parse_args()
 
 
 def main():
+    args = parse_args()
 
     schema = make_schema()
-    make_index(schema)
-    index_documents()
-
+    make_index(schema, args.index_path, args.index_name)
+    index_documents(args.documents_path, args.index_path, args.index_name)
 
 
 if __name__ == '__main__':
