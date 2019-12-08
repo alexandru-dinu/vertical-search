@@ -1,6 +1,6 @@
 import os
 import pickle
-import pandas
+import re
 from argparse import ArgumentParser
 from tqdm import tqdm
 
@@ -15,11 +15,25 @@ def index_document():
     pass
 
 
+def parse_authors(authors):
+
+    authorsName = []
+    for author in authors:
+        names = author.split(' ')
+        for name in names:
+            if name[-1] != '.':
+                authorsName.append(name)
+
+    return ' '.join(authorsName)
+
+
+
 def make_schema():
 
     schema = Schema(
         paper_field=KEYWORD(stored=True, lowercase=True, scorable=True),
         title=TEXT(stored=True),
+        authors=KEYWORD(stored=True, lowercase=True),
         pdf=ID(stored=True),
         abstract=TEXT(analyzer=StemmingAnalyzer())
     )
@@ -44,13 +58,17 @@ def index_documents(documentsPath='out', indexPath='indexdir', indexName='my_ind
             doc = pickle.load(f)
             writer = idx.writer()
             for paper in doc:
+                authorsAsString = parse_authors(paper.authors)
                 writer.add_document(
                     paper_field=paper.field,
                     title=paper.title,
+                    authors=authorsAsString,
+                    _stored_authors=paper.authors,
                     pdf=paper.pdf,
                     abstract=paper.abstract
                 )
             writer.commit()
+
     print(files[1:10])
 
 
@@ -60,8 +78,6 @@ def main():
     schema = make_schema()
     make_index(schema)
     index_documents()
-
-
 
 
 
