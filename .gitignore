@@ -1,3 +1,6 @@
+index/
+out/
+
 *.pkl
 
 # Byte-compiled / optimized / DLL files
