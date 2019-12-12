@@ -45,7 +45,7 @@ def index_documents(documentsPath, indexPath, indexName):
     idx = index.open_dir(indexPath, indexname=indexName)
     files = os.listdir(documentsPath)
     
-    for fileName in tqdm(files, desc='Indexing files'):
+    for fileName in tqdm(files, desc='Indexing'):
         path = open(os.path.join(documentsPath, fileName), 'rb')
         doc = pickle.load(path)
         

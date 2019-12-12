@@ -16,7 +16,7 @@ def get_user_query():
 
     for key in query_dict:
         query_dict[key] = input(f">>> Specify <{key:>12s}> or continue: ").strip()
-
+        
     return query_dict
 
 
