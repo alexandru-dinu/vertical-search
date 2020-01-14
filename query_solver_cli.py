@@ -6,16 +6,31 @@ from whoosh import qparser
 from whoosh import scoring
 from whoosh.qparser.dateparse import DateParserPlugin
 
+from bs4 import BeautifulSoup
 
-def pretty_print(d):
+
+red_text    = lambda s: f'\033[1;31m{s}\033[0m'
+green_text  = lambda s: f'\033[1;32m{s}\033[0m'
+blue_text   = lambda s: f'\033[1;34m{s}\033[0m'
+purple_text = lambda s: f'\033[1;35m{s}\033[0m'
+
+
+def pretty_print(d, indent=False):
     for k, v in d.items():
-        print(f'{k:>12s}: {v}')    
+        k = f'{k:>16s}'
+        if isinstance(v, dict):
+            print(f'{blue_text(k)}:')
+            pretty_print(v, indent=True)
+        else:
+            ind = '  ' if indent else ''
+            print(f'{ind}{blue_text(k)}: {v}')    
 
 def get_user_query():
     query_dict = {k: None for k in ['paper_field', 'date', 'title', 'authors', 'abstract']}
 
     for key in query_dict:
-        query_dict[key] = input(f">>> Specify <{key:>12s}> or continue: ").strip()
+        ks = f'{key:>12s}'
+        query_dict[key] = input(f">>> Specify (or skip) {blue_text(ks)}: ").strip()
         
     return query_dict
 
@@ -42,6 +57,11 @@ def parse_args():
 
     return parser.parse_args()
 
+def get_highlights(hs):
+    soup = BeautifulSoup(hs, features='lxml')
+    for m in soup.findAll('b'):
+        hs = hs.replace(str(m), green_text(m.text))
+    return hs
 
 def main():
     args = parse_args()
@@ -52,6 +72,7 @@ def main():
 
     while True:
         try:
+            print()
             query = get_user_query()
             query_as_string = ""
 
@@ -61,25 +82,33 @@ def main():
                 query_as_string += key + ":(" + query[key] + ") "
 
             q = parser.parse(query_as_string)
-#             print('query_as_string:', query_as_string)
-#             print('parsed_query   :', q.__repr__())
-#             continue
+            # print('query_as_string:', query_as_string)
+            # print('parsed_query   :', q.__repr__())
+            # continue
             
+            print()
             with idx.searcher(weighting=scoring.TF_IDF()) as searcher:
-                result = searcher.search(q, limit=args.limit)
+                hits = searcher.search(q, limit=args.limit)
                 
-                if len(result) == 0:
-                    print('* NO RESULTS FOUND!')
+                if len(hits) == 0:
+                    print(red_text('* NO RESULTS FOUND!'))
                 else:
-                    for i, res in enumerate(result, start=1):
-                        d = {k: res[k] for k in res.keys()}
-                        print(f'* HIT {i:>2d}')
+                    for i, hit in enumerate(hits, start=1):
+                        d = {k: hit[k] for k in hit.keys() if k != 'abstract'}
+                        d['highlights'] = {}
+                        
+                        for h in ['title', 'abstract']:
+                            hs = hit.highlights(h)
+                            if hs != '':
+                                d['highlights'][h] = get_highlights(hs)
+                                
+                        print(purple_text(f'* HIT {i:>2d}'))
                         pretty_print(d)
                 
                 print('-' * 120)
                     
         except whoosh.query.qcore.QueryError as e:
-            print(f'QUERY ERROR: {e}')
+            print(red_text(f'QUERY ERROR: {e}'))
             
         except KeyboardInterrupt:
             break

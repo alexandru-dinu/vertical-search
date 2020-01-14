@@ -23,15 +23,13 @@ def parse_authors(authors):
 
 
 def make_schema():
-    schema = Schema(
-        paper_field=KEYWORD(stored=True, lowercase=True, scorable=True),
-        title=TEXT(stored=True),
-        authors=KEYWORD(stored=True, lowercase=True),
-        pdf=ID(stored=True),
-        abstract=TEXT(analyzer=StemmingAnalyzer()),
-        date=DATETIME)
-
-    return schema
+    return Schema(
+        paper_field = KEYWORD(stored=True, lowercase=True, scorable=True),
+        title       = TEXT(stored=True, analyzer=StemmingAnalyzer()),
+        authors     = KEYWORD(stored=True, lowercase=True),
+        pdf         = ID(stored=True),
+        abstract    = TEXT(stored=True, analyzer=StemmingAnalyzer()),
+        date        = DATETIME)
 
 
 def make_index(schema, indexPath, indexName):
