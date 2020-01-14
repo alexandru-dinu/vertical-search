@@ -22,7 +22,7 @@ def pretty_print(d, indent=False):
             print(f'{blue_text(k)}:')
             pretty_print(v, indent=True)
         else:
-            ind = '  ' if indent else ''
+            ind = '\t' if indent else ''
             print(f'{ind}{blue_text(k)}: {v}')    
 
 def get_user_query():
@@ -105,6 +105,7 @@ def main():
                         print(purple_text(f'* HIT {i:>2d}'))
                         pretty_print(d)
                 
+                print()
                 print('-' * 120)
                     
         except whoosh.query.qcore.QueryError as e:
