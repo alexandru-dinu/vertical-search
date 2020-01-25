@@ -129,7 +129,7 @@ def main():
                             if hs != '':
                                 d['highlights'][h] = get_highlights(hs)
                                 
-                        print(purple_text(f'* HIT {i:>2d}'))
+                        print(purple_text(f'* HIT {i:>2d}' + ' ' + '-' * 120))
                         pretty_print(d)
                 
                 print()
@@ -138,7 +138,7 @@ def main():
         except whoosh.query.qcore.QueryError as e:
             print(red_text(f'QUERY ERROR: {e}'))
             
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
             break
 
 if __name__ == '__main__':
