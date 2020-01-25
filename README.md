@@ -2,7 +2,19 @@
 
 Vertical Search for Research Papers.
 
-### Example queries
+### Usage
+
+#### create index
+```bash
+python create_index.py --index_path index --index_name arxiv --documents_path papers/
+```
+
+#### run solver
+```bash
+python query_solver_cli.py --index_path index --index_name arxiv --limit 10
+```
+
+### Query examples
 
 See [Whoosh query language](https://whoosh.readthedocs.io/en/latest/querylang.html).
 
