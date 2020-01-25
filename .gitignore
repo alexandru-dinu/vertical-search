@@ -1,5 +1,6 @@
 index/
 papers/
+vec/
 
 *.pkl
 

@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import pickle
 
 import whoosh
 from whoosh import index
@@ -14,27 +15,26 @@ green_text  = lambda s: f'\033[1;32m{s}\033[0m'
 blue_text   = lambda s: f'\033[1;34m{s}\033[0m'
 purple_text = lambda s: f'\033[1;35m{s}\033[0m'
 
+# global data structures
+cv, tf_idf, features = pickle.load(open('vec/cv_tfidf_feat.pkl', 'rb'))
+
 
 def pretty_print(d, indent=False):
     for k, v in d.items():
-        k = f'{k:>16s}'
+        
+        if k in ['highlights', 'keywords']:
+            ck = purple_text(f'{k:>16s}')
+        else:
+            ck = blue_text(f'{k:>16s}')
+            
         if isinstance(v, dict):
-            print(f'{blue_text(k)}:')
+            print(f'{ck}:')
             pretty_print(v, indent=True)
         else:
             ind = '\t' if indent else ''
-            print(f'{ind}{blue_text(k)}: {v}')    
-
-def get_user_query():
-    query_dict = {k: None for k in ['paper_field', 'date', 'title', 'authors', 'abstract']}
-
-    for key in query_dict:
-        ks = f'{key:>12s}'
-        query_dict[key] = input(f">>> Specify (or skip) {blue_text(ks)}: ").strip()
-        
-    return query_dict
-
-
+            print(f'{ind}{ck}: {v}')    
+            
+            
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
@@ -57,11 +57,35 @@ def parse_args():
 
     return parser.parse_args()
 
+
+def get_user_query():
+    query_dict = {k: None for k in ['paper_field', 'date', 'title', 'authors', 'abstract']}
+
+    for key in query_dict:
+        ks = f'{key:>12s}'
+        query_dict[key] = input(f">>> Specify (or skip) {blue_text(ks)}: ").strip()
+        
+    return query_dict
+
+
 def get_highlights(hs):
     soup = BeautifulSoup(hs, features='lxml')
     for m in soup.findAll('b'):
         hs = hs.replace(str(m), green_text(m.text))
     return hs
+
+
+def get_keywords(doc, n=5, only_words=False):
+    tf_idf_vec = tf_idf.transform(cv.transform([doc]))
+    
+    coo = tf_idf_vec.tocoo()
+    sorted_items = sorted(zip(coo.col, coo.data), key=lambda x: (x[1], x[0]), reverse=True)
+    
+    if only_words:
+        return [features[idx] for (idx, _) in sorted_items[:n]]
+    
+    return {features[idx]: round(score, 3) for (idx, score) in sorted_items[:n]}
+
 
 def main():
     args = parse_args()
@@ -95,6 +119,9 @@ def main():
                 else:
                     for i, hit in enumerate(hits, start=1):
                         d = {k: hit[k] for k in hit.keys() if k != 'abstract'}
+                        d['date'] = str(d['date']).split()[0][:-3] # keep only Y-M
+                        d['authors']    = ', '.join(d['authors'])
+                        d['keywords']   = ', '.join(get_keywords(hit['abstract'], n=10, only_words=True))
                         d['highlights'] = {}
                         
                         for h in ['title', 'abstract']:

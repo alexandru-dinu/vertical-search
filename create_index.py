@@ -29,7 +29,7 @@ def make_schema():
         authors     = KEYWORD(stored=True, lowercase=True),
         pdf         = ID(stored=True),
         abstract    = TEXT(stored=True, analyzer=StemmingAnalyzer()),
-        date        = DATETIME)
+        date        = DATETIME(stored=True))
 
 
 def make_index(schema, indexPath, indexName):
