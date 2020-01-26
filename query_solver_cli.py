@@ -17,6 +17,7 @@ purple_text = lambda s: f'\033[1;35m{s}\033[0m'
 
 # global data structures
 cv, tf_idf, features = pickle.load(open('vec/cv_tfidf_feat.pkl', 'rb'))
+corpus_map = pickle.load(open('vec/corpus_map.pkl', 'rb'))
 
 
 def pretty_print(d, indent=False):
@@ -75,7 +76,12 @@ def get_highlights(hs):
     return hs
 
 
-def get_keywords(doc, n=5, only_words=False):
+def get_keywords(doc_id, n=5, only_words=False):
+    doc = corpus_map.get(doc_id, None)
+    
+    if doc is None:
+        return [] if only_words else {}
+    
     tf_idf_vec = tf_idf.transform(cv.transform([doc]))
     
     coo = tf_idf_vec.tocoo()
@@ -121,7 +127,7 @@ def main():
                         d = {k: hit[k] for k in hit.keys() if k != 'abstract'}
                         d['date'] = str(d['date']).split()[0][:-3] # keep only Y-M
                         d['authors']    = ', '.join(d['authors'])
-                        d['keywords']   = ', '.join(get_keywords(hit['abstract'], n=10, only_words=True))
+                        d['keywords']   = ', '.join(get_keywords(hit['pdf'], n=10, only_words=True))
                         d['highlights'] = {}
                         
                         for h in ['title', 'abstract']:
