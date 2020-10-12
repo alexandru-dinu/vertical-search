@@ -1,0 +1,5 @@
+Flask
+Whoosh
+hug
+tqdm
+beautifulsoup4
