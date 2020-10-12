@@ -1,5 +1,3 @@
-Flask
-Whoosh
-hug
 tqdm
+Whoosh
 beautifulsoup4
