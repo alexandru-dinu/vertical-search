@@ -14,22 +14,23 @@ from whoosh import index
 def parse_authors(authors):
     authorsName = []
     for author in authors:
-        names = author.split(' ')
+        names = author.split(" ")
         for name in names:
-            if name[-1] != '.':
+            if name[-1] != ".":
                 authorsName.append(name)
 
-    return ' '.join(authorsName)
+    return " ".join(authorsName)
 
 
 def make_schema():
     return Schema(
-        paper_field = KEYWORD(stored=True, lowercase=True, scorable=True),
-        title       = TEXT(stored=True, analyzer=StemmingAnalyzer()),
-        authors     = KEYWORD(stored=True, lowercase=True),
-        pdf         = ID(stored=True),
-        abstract    = TEXT(stored=True, analyzer=StemmingAnalyzer()),
-        date        = DATETIME(stored=True))
+        paper_field=KEYWORD(stored=True, lowercase=True, scorable=True),
+        title=TEXT(stored=True, analyzer=StemmingAnalyzer()),
+        authors=KEYWORD(stored=True, lowercase=True),
+        pdf=ID(stored=True),
+        abstract=TEXT(stored=True, analyzer=StemmingAnalyzer()),
+        date=DATETIME(stored=True),
+    )
 
 
 def make_index(schema, indexPath, indexName):
@@ -42,17 +43,17 @@ def make_index(schema, indexPath, indexName):
 def index_documents(documentsPath, indexPath, indexName):
     idx = index.open_dir(indexPath, indexname=indexName)
     files = os.listdir(documentsPath)
-    
-    for fileName in tqdm(files, desc='Indexing'):
-        path = open(os.path.join(documentsPath, fileName), 'rb')
+
+    for fileName in tqdm(files, desc="Indexing"):
+        path = open(os.path.join(documentsPath, fileName), "rb")
         doc = pickle.load(path)
-        
+
         writer = idx.writer()
-        
+
         for paper in doc:
             authorsAsString = parse_authors(paper.authors)
-            date = (*paper.date, 1) # kinda hacky
-            
+            date = (*paper.date, 1)  # kinda hacky
+
             writer.add_document(
                 paper_field=paper.field,
                 title=paper.title,
@@ -60,27 +61,22 @@ def index_documents(documentsPath, indexPath, indexName):
                 _stored_authors=paper.authors,
                 pdf=paper.pdf,
                 abstract=paper.abstract,
-                date=datetime.datetime(*date))
-            
+                date=datetime.datetime(*date),
+            )
+
         writer.commit()
 
 
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
-        '--index_path',
+        "--index_path",
         type=str,
-        help='Path to the folder where the index will be built'
+        help="Path to the folder where the index will be built",
     )
+    parser.add_argument("--index_name", type=str, help="Name of the index")
     parser.add_argument(
-        '--index_name',
-        type=str,
-        help='Name of the index'
-    )
-    parser.add_argument(
-        '--documents_path',
-        type=str,
-        help='Path to the documents to be indexed'
+        "--documents_path", type=str, help="Path to the documents to be indexed"
     )
     return parser.parse_args()
 
@@ -93,5 +89,5 @@ def main():
     index_documents(args.documents_path, args.index_path, args.index_name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
